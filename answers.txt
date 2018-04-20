@@ -1,0 +1,61 @@
+1.  What's a RubyGem and why would you use one?
+
+A RubyGem is a software application that is bundled specifically for use with Ruby.  The package, or "gem"
+contains specific functionality for Ruby applications.  This allows gem creators to share the package
+with other developers, who can re-use the functionality without having to develop from scratch.
+
+2.  What's the difference between lazy and eager loading?
+
+Lazy loading is when a calculation is only done when needed.  Eager loading means that
+the calculation is done right away when an object is initialized.
+
+3.  What's the difference between the CREATE TABLE and INSERT INTO SQL statements?
+
+CREATE TABLE is used to instantiate the entire table without any data.  INSERT INTO
+is used to add specific data (or records) into the table.
+
+4.  What's the difference between extend and include? When would you use one or the other?
+
+Include is used to import code into another class.  In Ruby, include is used to import
+the module into the ancestors of the class, which allows the methods to be used in
+class instances.  When extend is used, the methods are imported as class methods only,
+so they cannot be used as instance methods.  Include should be used if the methods are
+needed for instances of the class.
+
+5.  In persistence.rb, why do the save methods need to be instance (vs. class) methods?
+
+The save methods need to be instance methods because the instance variable data needs to
+be modified.  Class methods are generic and won't allow for the specific data of each
+instance to be unique.
+
+6.  Given the Jar-Jar Binks example earlier, what is the final SQL query in persistence.rb's save! method?
+
+UPDATE character
+SET "character_name=Jar-Jar Binks", "star_rating=2"
+WHERE id = 1
+
+7.  AddressBook's entries instance variable no longer returns anything. We'll fix this in a later checkpoint. What changes will we need to make?
+
+AddressBook needs to be linked to Entry.
+
+8.  Write a Ruby method that converts snake_case to CamelCase using regular expressions (you can test them on Rubular).
+Send your code in the submission tab.
+
+def underscore(snake_case_word)
+  string = snake_case_word.capitalize
+  string.gsub!(/(_)([a-z\d])/,&:upcase)
+  string.tr!("_", "")
+end
+
+9.  Add a select method which takes an attribute and value and searches for all records that match:
+
+def find_by(attribute, value)
+  rows = connection.execute <<-SQL
+    SELECT #{columns.join ","}
+    FROM #{table}
+    WHERE #{attribute} = #{value}
+  SQL
+
+  data = Hash[columns.zip(rows)]
+  new(data)
+end
