@@ -2,6 +2,11 @@ require 'sqlite3'
 
 module Selection
   def find(*ids)
+    ids.each do |id|
+      unless id.is_a?(Integer) && id > 0
+        raise ArgumentError.new("Only positive integers are allowed")
+      end
+    end
     if ids.length == 1
       find_one(ids.first)
     else
@@ -15,6 +20,9 @@ module Selection
   end
 
   def find_one(id)
+    unless id.is_a?(Integer) && id > 0
+      raise ArgumentError.new("Only positive integers are allowed")
+    end
     row = connection.get_first_row <<-SQL
       SELECT #{columns.join ","} FROM #{table}
       WHERE id = #{id};
@@ -23,6 +31,9 @@ module Selection
   end
 
   def find_by(attribute, value)
+    unless attribute.is_a?(String)
+      raise ArgumentError.new("Only strings are allowed for attribute agruments")
+    end
     rows = connection.execute <<-SQL
       SELECT #{columns.join ","} FROM #{table}
       WHERE #{attribute} = #{BlocRecord::Utility.sql_strings(value)};
@@ -31,7 +42,40 @@ module Selection
     rows_to_array(rows)
   end
 
+  def method_missing(m, value)
+    full_string = m
+    full_string.slice("find_by")
+    find_by(full_string, value)
+  end
+
+
+  def find_each(start, batch_size)
+    rows = connection.execute <<-SQL
+      SELECT #{columns.join ","} FROM #{table}
+      WHERE id >= #{start}
+      LIMIT #{batch_size}
+    SQL
+
+    all_rows = rows_to_array(rows)
+    all_rows.each do |row|
+      yield
+    end
+  end
+
+  def find_in_batches(start, batch_size)
+    rows = connection.execute <<-SQL
+      SELECT #{columns.join ","} FROM #{table}
+      WHERE id >= #{start}
+      LIMIT #{batch_size}
+    SQL
+    yield(rows_to_array(rows))
+
+  end
+
   def take(num=1)
+    unless num.is_a?(Integer) && num > 0
+      raise ArgumentError.new("Only positive integers are allowed")
+    end
     if num > 1
       rows = connection.execute <<-SQL
         SELECT #{columns.join ","} FROM #{table}
