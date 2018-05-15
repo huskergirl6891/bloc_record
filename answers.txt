@@ -59,3 +59,11 @@ def find_by(attribute, value)
   data = Hash[columns.zip(rows)]
   new(data)
 end
+
+
+Assignment 4:
+
+SELECT department_name, AVG(vacation_days) as average_vacation_days
+  FROM compensation
+  GROUP BY department_name
+  ORDER BY average_vacation_days;

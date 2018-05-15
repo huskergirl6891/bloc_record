@@ -149,6 +149,7 @@ module Selection
   end
 
   def order(*args)
+    # does this even need changes since the strings will already include the optional order direction?
     if args.count > 1
       order = args.join(",")
     else
@@ -160,10 +161,14 @@ module Selection
       ORDER BY #{order};
     SQL
     rows_to_array(rows)
+
   end
 
   def join(*args)
     if args.count > 1
+      args.each do |arg1|
+        puts arg1
+      end
       joins = args.map { |arg| "INNER JOIN #{arg} ON #{arg}.#{table}_id = #{table}.id"}.join(" ")
       rows = connection.execute <<-SQL
         SELECT * FROM #{table} #{joins}
@@ -178,6 +183,14 @@ module Selection
         rows = connection.execute <<-SQL
           SELECT * FROM #{table}
           INNER JOIN #{args.first} ON #{args.first}.#{table}_id = #{table}.id
+        SQL
+      when Hash
+        expression_hash = BlocRecord::Utility.convert_keys(args.first)
+        expression = expression_hash.map {|key, value| "INNER JOIN #{key} ON #{key}.#{table}_id = #{table}.id INNER JOIN #{BlocRecord::Utility.sql_strings(value)} ON #{BlocRecord::Utility.sql_strings(value)}.#{key}_id = #{key}.id"}.join(" and ")
+        puts expression
+        sql = <<-SQL
+          SELECT #{columns.join ","} FROM #{table}
+          #{expression};
         SQL
       end
     end
