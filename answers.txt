@@ -67,3 +67,7 @@ SELECT department_name, AVG(vacation_days) as average_vacation_days
   FROM compensation
   GROUP BY department_name
   ORDER BY average_vacation_days;
+
+
+rspec spec/entry_spec.rb
+rspec spec/address_book_spec.rb
