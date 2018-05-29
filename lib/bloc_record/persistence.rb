@@ -36,6 +36,10 @@ module Persistence
     self.class.update(self.id, updates)
   end
 
+  def destroy
+    self.class.destroy(self.id)
+  end
+
   def method_missing(m, value)
     full_string = m
     full_string.slice("update_")
@@ -45,6 +49,53 @@ module Persistence
   module ClassMethods
     def update_all(updates)
       update(nil, updates)
+    end
+
+    def destroy(*id)
+      if id.length > 1
+        where_clause = "WHERE id IN (#{id.join(",")});"
+      else
+        where_clause = "WHERE id = #{id.first};"
+      end
+
+      connection.execute <<-SQL
+        DELETE FROM #{table} #{where_clause}
+      SQL
+
+      true
+    end
+
+    def destroy_all(conditions_hash=nil)
+      # Check if conditions_hash is Array, meaning destroy multiple
+      # records at once.  If Array, loop through and recursively call destroy_all
+      # method and pass in each condition to destroy
+      if conditions_hash.class == Array
+        conditions_hash.each do |condition|
+          destroy_all(condition)
+        end
+      end
+
+      if conditions_hash && !conditions_hash.empty? && conditions_hash.class == Hash
+        conditions_hash = BlocRecord::Utility.convert_keys(conditions_hash)
+        conditions = conditions_hash.map {|key, value| "#{key}=#{BlocRecord::Utility.sql_strings(value)}"}.join(" and ")
+
+        connection.execute <<-SQL
+          DELETE FROM #{table}
+          WHERE #{conditions};
+        SQL
+      elsif conditions_hash.class == String && conditions_hash && !conditions_hash.empty?
+        conditions = conditions_hash
+        connection.execute <<-SQL
+          DELETE FROM #{table}
+          WHERE #{conditions};
+        SQL
+      else
+        connection.execute <<-SQL
+          DELETE FROM #{table}
+        SQL
+      end
+
+      true
     end
 
     def create(attrs)
